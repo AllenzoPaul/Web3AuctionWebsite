@@ -1,0 +1,26 @@
+{
+  "name": "web3auctionwebsite",
+  "version": "1.0.0",
+  "description": "A minimalistic, modern blockchain-based auction platform built with Solidity and vanilla JavaScript.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AllenzoPaul/Web3AuctionWebsite.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AllenzoPaul/Web3AuctionWebsite/issues"
+  },
+  "homepage": "https://github.com/AllenzoPaul/Web3AuctionWebsite#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.1.2",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "ethers": "^6.15.0",
+    "hardhat": "^2.26.5"
+  }
+}
