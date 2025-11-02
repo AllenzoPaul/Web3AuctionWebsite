@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlockAuction - Decentralized Bidding Platform</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #4a4a4a;
+            --accent: #0066ff;
+            --accent-hover: #0052cc;
+            --bg: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --shadow: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.95);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 72px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .wallet-btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border);
+            background: var(--bg);
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .wallet-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .wallet-btn.connected {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 64px;
+            padding: 48px 0;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 700;
+            letter-spacing: -1.5px;
+            margin-bottom: 16px;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Setup Card */
+        .setup-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 48px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .setup-card h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--secondary);
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: var(--bg);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,102,255,0.1);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 28px;
+            border-radius: 8px;
+            border: none;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,102,255,0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--primary);
+            border: 1.5px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Auction Card */
+        .auction-container {
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .auction-header {
+            margin-bottom: 48px;
+        }
+
+        .auction-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .status-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-ended {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .auction-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .auction-id {
+            color: var(--secondary);
+            font-size: 14px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .stat-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-value.highlight {
+            color: var(--accent);
+        }
+
+        .stat-subtext {
+            font-size: 13px;
+            color: var(--secondary);
+            word-break: break-all;
+        }
+
+        /* Action Grid */
+        .action-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .action-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+
+        .action-card h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .bid-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .bid-item {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bid-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Messages */
+        .message {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .message-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .message-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Timer */
+        .timer {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+
+        .timer-box {
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .timer-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .timer-label {
+            font-size: 12px;
+            color: var(--secondary);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .hero p {
+                font-size: 16px;
+            }
+
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .auction-title {
+                font-size: 28px;
+            }
+        }
+
+        /* Instructions */
+        .instructions {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .instructions h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .instructions ol {
+            margin-left: 24px;
+            line-height: 1.8;
+            color: var(--secondary);
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .code {
+            background: var(--primary);
+            color: #10b981;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo">Block<span>Auction</span></a>
+            <button class="wallet-btn" id="walletBtn" onclick="connectWallet()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                <span>Connect Wallet</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1>Decentralized Auction Platform</h1>
+            <p>Transparent, secure, and trustless bidding powered by blockchain technology</p>
+        </div>
+
+        <!-- Setup Section -->
+        <div id="setupSection">
+            <div class="setup-card">
+                <h2>Connect to Auction</h2>
+                
+                <div class="instructions">
+                    <h3>Quick Start Guide</h3>
+                    <ol>
+                        <li>Deploy the <span class="code">SimpleAuction.sol</span> contract in Remix IDE</li>
+                        <li>Copy the deployed contract address</li>
+                        <li>Paste it below and click "Connect to Auction"</li>
+                        <li>Start bidding on blockchain!</li>
+                    </ol>
+                </div>
+
+                <div class="input-group">
+                    <label for="contractAddress">Contract Address</label>
+                    <input type="text" id="contractAddress" placeholder="0x..." />
+                </div>
+
+                <button class="btn btn-primary btn-full" onclick="connectToContract()">
+                    Connect to Auction
+                </button>
+            </div>
+        </div>
+
+        <!-- Auction Section (Hidden by default) -->
+        <div id="auctionSection" class="auction-container">
+            <!-- Auction Header -->
+            <div class="auction-header">
+                <div class="auction-status status-active" id="auctionStatus">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                        <circle cx="6" cy="6" r="6"/>
+                    </svg>
+                    <span>Live Auction</span>
+                </div>
+                <h1 class="auction-title" id="itemName">Loading...</h1>
+                <p class="auction-id">Contract: <span id="displayAddress">-</span></p>
+
+                <!-- Timer -->
+                <div class="timer" id="timer">
+                    <div class="timer-box">
+                        <div class="timer-value" id="hours">00</div>
+                        <div class="timer-label">Hours</div>
+                    </div>
+                    <div class="timer-box">
+                        <div class="timer-value" id="minutes">00</div>
+                        <div class="timer-label">Minutes</div>
+                    </div>
+                    <div class="timer-box">
+                        <div class="timer-value" id="seconds">00</div>
+                        <div class="timer-label">Seconds</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Current Bid</div>
+                    <div class="stat-value highlight" id="currentBid">0 ETH</div>
+                    <div class="stat-subtext" id="currentBidder">No bids yet</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Minimum Bid</div>
+                    <div class="stat-value" id="minimumBid">0 ETH</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Your Bid</div>
+                    <div class="stat-value" id="yourBid">0 ETH</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Seller</div>
+                    <div class="stat-value" style="font-size: 16px;" id="seller">-</div>
+                </div>
+            </div>
+
+            <!-- Action Grid -->
+            <div class="action-grid">
+                <!-- Place Bid -->
+                <div class="action-card">
+                    <h3>Place Your Bid</h3>
+                    <div class="input-group">
+                        <label for="bidAmount">Bid Amount (ETH)</label>
+                        <input type="number" id="bidAmount" placeholder="1.5" step="0.01" />
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="placeBid()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                        Place Bid
+                    </button>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="action-card">
+                    <h3>Quick Actions</h3>
+                    <button class="btn btn-secondary btn-full" onclick="loadAuctionInfo()" style="margin-bottom: 12px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                        </svg>
+                        Refresh Data
+                    </button>
+                    <button class="btn btn-secondary btn-full" onclick="withdrawBid()" style="margin-bottom: 12px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 10h18M3 14h18m-9-4v8m-7 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/>
+                        </svg>
+                        Withdraw Bid
+                    </button>
+                    <button class="btn btn-secondary btn-full" onclick="endAuction()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 11l3 3L22 4"/>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                        </svg>
+                        End Auction
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="messages"></div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p style="color: var(--secondary); font-weight: 500;">Processing transaction...</p>
+        </div>
+    </div>
+
+    <script>
+        const contractABI = [
+            "function itemName() view returns (string)",
+            "function minimumBid() view returns (uint256)",
+            "function highestBid() view returns (uint256)",
+            "function highestBidder() view returns (address)",
+            "function seller() view returns (address)",
+            "function auctionEnded() view returns (bool)",
+            "function getTimeLeft() view returns (uint256)",
+            "function getMyBid() view returns (uint256)",
+            "function isActive() view returns (bool)",
+            "function placeBid() payable",
+            "function withdraw()",
+            "function endAuction()"
+        ];
+
+        let provider, signer, contract, userAddress;
+        let timerInterval;
+
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                showMessage('Please install MetaMask to use this application', 'error');
+                return;
+            }
+
+            try {
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+
+                const btn = document.getElementById('walletBtn');
+                btn.classList.add('connected');
+                btn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>${userAddress.substring(0, 6)}...${userAddress.substring(38)}</span>
+                `;
+
+                showMessage('Wallet connected successfully!', 'success');
+            } catch (error) {
+                showMessage('Failed to connect wallet: ' + error.message, 'error');
+            }
+        }
+
+        async function connectToContract() {
+            const address = document.getElementById('contractAddress').value.trim();
+
+            if (!address) {
+                showMessage('Please enter a contract address', 'error');
+                return;
+            }
+
+            if (!provider) {
+                showMessage('Please connect your wallet first', 'error');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                contract = new ethers.Contract(address, contractABI, signer);
+                
+                // Test connection
+                await contract.itemName();
+                
+                document.getElementById('setupSection').style.display = 'none';
+                document.getElementById('auctionSection').style.display = 'block';
+                document.getElementById('displayAddress').textContent = address.substring(0, 10) + '...' + address.substring(address.length - 8);
+                
+                await loadAuctionInfo();
+                startTimer();
+                showMessage('Successfully connected to auction!', 'success');
+                showLoading(false);
+            } catch (error) {
+                showLoading(false);
+                showMessage('Failed to connect to contract. Please check the address.', 'error');
+            }
+        }
+
+        async function loadAuctionInfo() {
+            if (!contract) return;
+
+            try {
+                const [item, minBid, highest, bidder, seller, active, timeLeft, myBid] = await Promise.all([
+                    contract.itemName(),
+                    contract.minimumBid(),
+                    contract.highestBid(),
+                    contract.highestBidder(),
+                    contract.seller(),
+                    contract.isActive(),
+                    contract.getTimeLeft(),
+                    contract.getMyBid()
+                ]);
+
+                document.getElementById('itemName').textContent = item;
+                document.getElementById('minimumBid').textContent = ethers.utils.formatEther(minBid) + ' ETH';
+                document.getElementById('currentBid').textContent = ethers.utils.formatEther(highest) + ' ETH';
+                document.getElementById('yourBid').textContent = ethers.utils.formatEther(myBid) + ' ETH';
+                document.getElementById('seller').textContent = seller.substring(0, 10) + '...' + seller.substring(seller.length - 8);
+                
+                if (bidder !== ethers.constants.AddressZero) {
+                    document.getElementById('currentBidder').textContent = bidder.substring(0, 10) + '...' + bidder.substring(bidder.length - 8);
+                } else {
+                    document.getElementById('currentBidder').textContent = 'No bids yet';
+                }
+
+                const statusEl = document.getElementById('auctionStatus');
+                if (active) {
+                    statusEl.className = 'auction-status status-active';
+                    statusEl.innerHTML = `
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                            <circle cx="6" cy="6" r="6"/>
+                        </svg>
+                        <span>Live Auction</span>
+                    `;
+                } else {
+                    statusEl.className = 'auction-status status-ended';
+                    statusEl.innerHTML = `
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                            <circle cx="6" cy="6" r="6"/>
+                        </svg>
+                        <span>Auction Ended</span>
+                    `;
+                }
+            } catch (error) {
+                showMessage('Error loading auction data', 'error');
+            }
+        }
+
+        async function placeBid() {
+            const amount = document.getElementById('bidAmount').value;
+
+            if (!amount || amount <= 0) {
+                showMessage('Please enter a valid bid amount', 'error');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                const amountWei = ethers.utils.parseEther(amount);
+                const tx = await contract.placeBid({ value: amountWei });
+                await tx.wait();
+
+                showMessage('Bid placed successfully! 🎉', 'success');
+                document.getElementById('bidAmount').value = '';
+                await loadAuctionInfo();
+                showLoading(false);
+            } catch (error) {
+                showLoading(false);
+                showMessage('Failed to place bid: ' + error.message, 'error');
+            }
+        }
+
+        async function withdrawBid() {
+            try {
+                showLoading(true);
+                const tx = await contract.withdraw();
+                await tx.wait();
+
+                showMessage('Bid withdrawn successfully!', 'success');
+                await loadAuctionInfo();
+                showLoading(false);
+            } catch (error) {
+                showLoading(false);
+                showMessage('Failed to withdraw: ' + error.message, 'error');
+            }
+        }
+
+        async function endAuction() {
+            try {
+                showLoading(true);
+                const tx = await contract.endAuction();
+                await tx.wait();
+
+                showMessage('Auction ended successfully!', 'success');
+                await loadAuctionInfo();
+                showLoading(false);
+            } catch (error) {
+                showLoading(false);
+                showMessage('Failed to end auction: ' + error.message, 'error');
+            }
+        }
+
+        async function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(async () => {
+                try {
+                    const timeLeft = await contract.getTimeLeft();
+                    const seconds = parseInt(timeLeft);
+
+                    const h = Math.floor(seconds / 3600);
+                    const m = Math.floor((seconds % 3600) / 60);
+                    const s = seconds % 60;
+
+                    document.getElementById('hours').textContent = String(h).padStart(2, '0');
+                    document.getElementById('minutes').textContent = String(m).padStart(2, '0');
+                    document.getElementById('seconds').textContent = String(s).padStart(2, '0');
+
+                    if (seconds <= 0) {
+                        clearInterval(timerInterval);
+                        loadAuctionInfo();
+                    }
+                } catch (error) {
+                    console.error('Timer error:', error);
+                }
+            }, 1000);
+        }
+
+        function showMessage(text, type) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${type}`;
+            
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+            messageDiv.innerHTML = `
+                <span style="font-weight: 600; font-size: 16px;">${icon}</span>
+                <span>${text}</span>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => messageDiv.remove(), 300);
+            }, 5000);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+
+        // Auto-refresh data every 15 seconds
+        setInterval(() => {
+            if (contract) {
+                loadAuctionInfo();
+            }
+        }, 15000);
+    </script>
+</body>
+</html>
